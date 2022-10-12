@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container-lg p-5">
+      <form id="customer-form">
+        <div class="mb-3 gy-3 row">
+          <label for="name" class="col-4 col-md-2 col-form-label">姓名</label>
+          <div class="col-8 col-md-4">
+            <input type="text" name="name" class="form-control" id="name" >
+          </div>
+          <label for="phone" class="col-4 col-md-2 col-form-label">電話</label>
+          <div class="col-8 col-md-4">
+            <input type="text" name="phone" class="form-control" id="phone" >
+          </div>
+        </div>
+        <div class="mb-3 row d-flex justify-content-end">
+          <button id="submit-btn" type="submit" class="col-12 col-md-2 btn btn-primary">綁定帳號</button>
+        </div>
+      </form>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">確認資訊</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div id="modal-body" class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="modalCancelBtn" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" id="modalConfirmBtn" class="btn btn-primary">確認</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.2/js/bootstrap.min.js" integrity="sha512-5BqtYqlWfJemW5+v+TZUs22uigI8tXeVah5S/1Z6qBLVO7gakAOtkOzUtgq6dsIo5c0NJdmGPs0H9I+2OHUHVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      const formData = {};
+      const liffId = "1657550292-G20Z0OKW";
+      function successCallback() {
+        console.log('successCallback');
+      }
+      function errorCallback() {
+        console.log('errorCallback');
+      }
+      function bindingSuccess(data) {
+        $('#confirmModalLabel').text('綁定結果');
+        $('#modalConfirmBtn').text('OK');
+        $('#modalConfirmBtn').removeAttr('disabled');
+        $('#modalCancelBtn').addClass('d-none');
+        $('#modal-body').empty();
+        $('#modal-body').append(data.error ? `
+          <div class="mb-3 row">
+            <label class="col col-form-label">失敗，請聯絡客服人員。</label>
+          </div>
+        ` : `
+          <div class="mb-3 row">
+            <label class="col-4 col-form-label">資料</label>
+            <label class="col-4 col-form-label d-flex justify-content-center">${data.name}</label>
+            <label class="col-4 col-form-label d-flex justify-content-center">${data.phone}</label>
+          </div>
+        `)
+      }
+      function renderModalBody(info) {
+        const { address, room } = info
+        $('#submit-btn').text('綁定帳號');
+        $('#submit-btn').removeAttr('disabled');
+        $('#modal-body').append(`
+          <div class="mb-3 row">
+            <label class="col-2 col-form-label">地址</label>
+            <label class="col-10 col-form-label d-flex justify-content-center">${address}</label>
+          </div>
+          <div class="mb-3 row">
+            <label class="col-2 col-form-label">房號</label>
+            <label class="col-10 col-form-label d-flex justify-content-center">${room}</label>
+          </div>
+        `);
+        $("#confirmModal").modal('show');
+      }
+      $('#submit-btn').click(function(e) {
+        e.preventDefault();
+        $('#submit-btn').attr('disabled', 'disabled');
+        $('#submit-btn').text('讀取中...');
+        $.each($('#customer-form').serializeArray(), function(i, field) {
+            formData[field.name] = field.value;
+        });
+        $.get( `https://script.google.com` +
+          `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+          `?name=${formData.name}&phone=${formData.phone}`, renderModalBody);
+      });
+      $('#modalConfirmBtn').click(function(e) {
+        e.preventDefault();
+        if ($('#modalConfirmBtn').text() === '確認') {
+          $('#modalConfirmBtn').attr('disabled', 'disabled');
+          $('#modalConfirmBtn').text('綁定中...');
+          liff
+            .getProfile()
+            .then((profile) => {
+              // $('#modal-body').append(`
+              //   <div class="mb-3 row">
+              //     <label class="col-2 col-form-label">id</label>
+              //     <label class="col-10 col-form-label d-flex justify-content-center">${profile.userId}</label>
+              //   </div>
+              // `);
+              $.get( `https://script.google.com` +
+                `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+                `?name=${formData.name}&phone=${formData.phone}&userId=${profile.userId}`, bindingSuccess);
+            })
+            .catch((err) => {
+              console.log("error", err);
+            });
+          // $("#confirmModal").modal('hide');
+        } else {
+          liff.closeWindow();
+        }
+      });
+      var confirmModal = document.getElementById('confirmModal');
+      confirmModal.addEventListener('hidden.bs.modal', function (event) {
+        $('#modal-body').empty();
+      })
+      $(document).ready(function() {
+        liff.init({ liffId }, successCallback, errorCallback);
+      });
+    </script>
+  </body>
+</html>
