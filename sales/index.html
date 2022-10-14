@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        body {
+            position: relative;
+        }
+        .fullscreen {
+            z-index: 1080;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(220, 220, 220, 0.5);
+        }
+    </style>
+  </head>
+  <body>
+    <div id="spinner" class="fullscreen d-flex justify-content-center align-items-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div class="container-lg p-5">
+      <form id="customer-form">
+        <div class="mb-3 gy-3 gy-3 row">
+          <label for="address" class="col-4 col-md-2 col-form-label">地址</label>
+          <div class="col-8 col-md-4">
+            <select id="address" name="address" class="form-select" aria-label="address select" disabled>
+            </select>
+          </div>
+          <label for="room" class="col-4 col-md-2 col-form-label">房號</label>
+          <div class="col-8 col-md-4">
+            <select id="room" name="room" class="form-select" aria-label="room select" disabled>
+            </select>
+          </div>
+        </div>
+        <div id="advance" class="advance d-none" >
+          <div class="mb-3 gy-3 row">
+            <label for="name" class="col-4 col-md-2 col-form-label">房客姓名</label>
+            <div class="col-8 col-md-4">
+              <input type="text" name="name" class="form-control" id="name" placeholder="ex: 王大明" required>
+            </div>
+            <label for="phone" class="col-4 col-md-2 col-form-label">電話號碼</label>
+            <div class="col-8 col-md-4">
+              <input type="text" name="phone" class="form-control" id="phone" placeholder="ex: 0912123123" required>
+            </div>
+          </div>
+          <div class="mb-3 row">
+            <label for="sales" class="col-4 col-md-2 col-form-label">負責業務</label>
+            <div class="col-8 col-md-10">
+              <select id="sales" name="sales" class="form-select" aria-label="sales select">
+              </select>
+            </div>
+          </div>
+          <div class="mb-3 row d-flex justify-content-end">
+            <button id="submit-btn" type="submit" class="col-12 col-md-2 btn btn-primary">更新</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">確認更新內容</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div id="modal-body" class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="modalCancelBtn" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" id="modalConfirmBtn" class="btn btn-primary" disabled>確認</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.2/js/bootstrap.min.js" integrity="sha512-5BqtYqlWfJemW5+v+TZUs22uigI8tXeVah5S/1Z6qBLVO7gakAOtkOzUtgq6dsIo5c0NJdmGPs0H9I+2OHUHVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      var currentData = {};
+      var mappingList = {};
+      var updateData = {};
+      function updateHandler(data) {
+        $('#confirmModalLabel').text('更新結果');
+        $('#modalCancelBtn').addClass('d-none');
+        $('#modalConfirmBtn').text('OK');
+        $("#confirmModal").modal('show');
+        if (data.success) {
+            $('#modal-body').append(
+                `<div class="alert alert-success" role="alert">
+                    更新成功！
+                </div>`);
+        } else {
+            $('#modal-body').append(
+                `<div class="alert alert-danger" role="alert">
+                    更新失敗！
+                </div>`);
+            $('#modal-body').append(
+                `<div class="alert alert-info" role="alert">
+                    ${data.error}
+                </div>`);
+        }
+        $('#spinner').addClass('d-none');
+      }
+      function init(data) {
+        const { address, mapping, sales } = data;
+        mappingList = mapping;
+        $('select#address').empty();
+        $('select#address').append(`<option class="empty" value="empty">請選擇</option>`)
+        address.map((data, index) => {
+          $('select#address').append(`<option class="addrOpt" value="${data.value}">${data.value}</option>`)
+        })
+        $('select#address').removeAttr('disabled');
+        $('select#sales').empty();
+        $('select#sales').append(`<option class="empty" value="無">無</option>`)
+        sales.map((data, index) => {
+          $('select#sales').append(`<option class="saleOpt" value="${data.value}">${data.value}</option>`)
+        })
+        $('#spinner').addClass('d-none');
+      }
+      function renderRoomOptions(list) {
+        $('select#room').empty();
+        $('select#room').append(`<option class="empty" value="empty">請選擇</option>`)
+        list.map((data, index) => {
+          $('select#room').append(`<option class="roomOpt" value="${data.room}">${data.room}</option>`)
+        })
+        $('select#room').removeAttr('disabled');
+        $('#spinner').addClass('d-none');
+      }
+      function renderForm(data) {
+        const { name, phone, sales } = data;
+        currentData = data;
+        $('#spinner').addClass('d-none');
+        $('select#sales option').removeAttr('selected');
+        $('div#advance').removeClass('d-none');
+        $('input#name').val(name);
+        $('input#phone').val(phone);
+        $(`select#sales option[value="${sales}"]`).attr('selected', 'selected');
+      }
+      $('#submit-btn').click(function(e) {
+        e.preventDefault();
+        $("#confirmModal").modal('show');
+      });
+      $('#modalConfirmBtn').click(function(e) {
+        e.preventDefault();
+        if ($('#modalConfirmBtn').text() === '確認') {
+            $('#spinner').removeClass('d-none');
+            $.get(`https://script.google.com` +
+            `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+            `?room=${updateData.room}&address=${updateData.address}&phone=${updateData.phone}&name=${updateData.name}&sales=${updateData.sales}`,
+            updateHandler);
+            $("#confirmModal").modal('hide');
+            $('#modal-body').empty();
+            $('div#advance').addClass('d-none');
+        } else {
+            $("#confirmModal").modal('hide');
+            $('#spinner').removeClass('d-none');
+            $.get( `https://script.google.com` +
+            `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+            `?address=${updateData.address}&room=${updateData.room}`, renderForm);
+        }
+      });
+      $('select#address').on('change', function() {
+        $('#spinner').removeClass('d-none');
+        if ($(this).children('option.empty').length){
+          this.remove('option.empty');
+        }
+        $('div#advance').addClass('d-none');
+        $('select#room').attr('disabled', 'disabled');
+        updateData = {};
+        $.get( `https://script.google.com` +
+          `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+          `?type=room&address=${this.value}`, renderRoomOptions);
+      });
+      $('select#room').on('change', function() {
+        $('#spinner').removeClass('d-none');
+        if ($(this).children('option.empty').length){
+          this.remove('option.empty');
+        }
+        $('div#advance').addClass('d-none');
+        const addr = $('select#address').find(":selected").val();
+        updateData = {};
+        $.get( `https://script.google.com` +
+          `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+          `?address=${addr}&room=${this.value}`, renderForm);
+      });
+      $( document ).ready(function() {
+        $.get( `https://script.google.com` +
+          `/macros/s/AKfycby99Zrqw9fAAyldDXEl2ReC54ZxOVln2Mn6iKVrnBUOko20ZLX7SDzjy7UMyk6i31AH/exec`+
+          `?type=salesInit`, init);
+      });
+      var confirmModal = document.getElementById('confirmModal');
+      confirmModal.addEventListener('shown.bs.modal', function () {
+        $('#spinner').removeClass('d-none');
+        $.each($('#customer-form').serializeArray(), function(i, field) {
+            updateData[field.name] = field.value;
+        });
+        var diff = [];
+        Object.keys(updateData).map((k) => {
+          if (updateData[k] != currentData[k]) {
+            diff.push(k);
+          }
+        })
+        $('h5#confirmModalLabel').text(`資料建立: ${currentData.address} - ${currentData.room}`)
+        if (diff.length > 0) {
+          diff.map((d) => {
+            $('#modal-body').append(`
+              <div class="mb-3 row">
+                <label class="col-3 col-form-label">${mappingList[d]}</label>
+                <label class="col-4 col-form-label d-flex justify-content-center">${currentData[d]}</label>
+                <div class="col-1 d-flex justify-content-center align-items-center">➜</div>
+                <label class="col-4 col-form-label d-flex justify-content-center">${updateData[d]}</label>
+              </div>
+            `)
+          });
+          $('#modalConfirmBtn').removeAttr('disabled');
+        } else {
+          $('#modal-body').text('並無更新欄位資料！');
+        }
+        $('#spinner').addClass('d-none');
+      });
+      confirmModal.addEventListener('hidden.bs.modal', function (event) {
+        $('h5#confirmModalLabel').text('確認更新內容');
+        $('#modalConfirmBtn').text('確認');
+        $('#modal-body').empty();
+        $('#modalConfirmBtn').attr('disabled', 'disabled');
+        $('#modalCancelBtn').removeClass('d-none');
+      })
+    </script>
+  </body>
+</html>
