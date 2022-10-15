@@ -89,6 +89,25 @@
         <button id="close-btn" class="col-12 col-md-2 btn btn-secondary">關閉</button>
       </div>
     </div>
+    <!-- Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">錯誤</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div id="modal-body" class="modal-body">
+            <div class="alert alert-danger" role="alert">
+              查無資料。請先綁定Line帳號！若已綁定請聯絡客服。
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="modalCancelBtn" class="btn btn-secondary" data-bs-dismiss="modal">確認</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.2/js/bootstrap.min.js" integrity="sha512-5BqtYqlWfJemW5+v+TZUs22uigI8tXeVah5S/1Z6qBLVO7gakAOtkOzUtgq6dsIo5c0NJdmGPs0H9I+2OHUHVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js" integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -111,18 +130,23 @@
         console.log('errorCallback');
       }
       function bindingHandler(data) {
-        $('input#name').val(data.name);
-        $('input#phone').val(data.phone);
-        $('input#address').val(data.address);
-        $('input#room').val(data.room);
-        $('input#paymentMethod').val(data.paymentMethod);
-        $('input#deposit').val(data.deposit);
-        $('input#startDate').val(data.startDate.split('T')[0].replaceAll('-', '/'));
-        $('input#leaveDate').val(data.leaveDate.split('T')[0].replaceAll('-', '/'));
-        $('input#lastPayTime').val(data.lastPayTime.split('T')[0].replaceAll('-', '/'));
-        $('input#nextPayDate').val(data.nextPayDate.split('T')[0].replaceAll('-', '/'));
-        $('div#infoBlock').removeClass('d-none');
-        $('#spinner').addClass('d-none');
+        if (data.error) {
+          $("#confirmModal").modal('show');
+          $('#spinner').addClass('d-none');
+        } else {
+          $('input#name').val(data.name);
+          $('input#phone').val(data.phone);
+          $('input#address').val(data.address);
+          $('input#room').val(data.room);
+          $('input#paymentMethod').val(data.paymentMethod);
+          $('input#deposit').val(data.deposit);
+          $('input#startDate').val(data.startDate.split('T')[0].replaceAll('-', '/'));
+          $('input#leaveDate').val(data.leaveDate.split('T')[0].replaceAll('-', '/'));
+          $('input#lastPayTime').val(data.lastPayTime.split('T')[0].replaceAll('-', '/'));
+          $('input#nextPayDate').val(data.nextPayDate.split('T')[0].replaceAll('-', '/'));
+          $('div#infoBlock').removeClass('d-none');
+          $('#spinner').addClass('d-none');
+        }
       }
       $('#close-btn').click(function(e) {
         e.preventDefault();
@@ -131,6 +155,10 @@
       $(document).ready(function() {
         liff.init({ liffId }, successCallback, errorCallback);
       });
+      var confirmModal = document.getElementById('confirmModal');
+      confirmModal.addEventListener('hidden.bs.modal', function (event) {
+        liff.closeWindow();
+      })
     </script>
   </body>
 </html>
